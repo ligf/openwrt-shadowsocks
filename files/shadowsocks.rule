@@ -32,6 +32,7 @@ usage() {
 		    -U                      enable udprelay mode, using different IP
 		                            and ports for TCP and UDP
 		    -f                      flush the rules
+		    -g                      gfwlist mode
 		    -h                      show this help message and exit
 EOF
 	exit $1
@@ -53,23 +54,35 @@ flush_r() {
 	}
 	flush_iptables nat
 	flush_iptables mangle
+	sed -i '/^conf-dir=/d' /etc/dnsmasq.conf
 	ip rule del fwmark 0x01/0x01 table 100 2>/dev/null
 	ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null
 	ipset -X ss_spec_lan_ac 2>/dev/null
 	ipset -X ss_spec_wan_ac 2>/dev/null
+	ipset -X ss_spec_wan_gfw 2>/dev/null
 	[ -n "$FWI" ] && echo '#!/bin/sh' >$FWI
 	return 0
 }
 
 ipset_r() {
+	$IPT -N SS_SPEC_WAN_AC
+	if [ "$GFW_LIST" = 0 ]; then
 	ipset -! -R <<-EOF || return 1
 		create ss_spec_wan_ac hash:net
 		$(gen_iplist | sed -e "s/^/add ss_spec_wan_ac /")
 		$(for ip in $WAN_FW_IP; do echo "add ss_spec_wan_ac $ip nomatch"; done)
-EOF
-	$IPT -N SS_SPEC_WAN_AC && \
+	EOF
+
 	$IPT -A SS_SPEC_WAN_AC -m set --match-set ss_spec_wan_ac dst -j RETURN && \
 	$IPT -A SS_SPEC_WAN_AC -j SS_SPEC_WAN_FW
+
+	else
+	echo "conf-dir=/etc/dnsmasq.d" >> /etc/dnsmasq.conf
+	ipset -N ss_spec_wan_gfw hash:ip
+	/etc/init.d/dnsmasq restart
+	$IPT -A SS_SPEC_WAN_AC -m set --match-set ss_spec_wan_gfw dst -j SS_SPEC_WAN_FW
+	fi
+	
 	return $?
 }
 
@@ -126,7 +139,7 @@ tp_rule() {
 }
 
 get_wan_ip() {
-	cat <<-EOF | grep -E "^([0-9]{1,3}\.){3}[0-9]{1,3}"
+	cat <<-EOF | grep -E "^([0-9,3}\.){3}[0-9]{1,3}"
 		$server
 		$SERVER
 		$WAN_BP_IP
@@ -173,7 +186,7 @@ EOF
 	return 0
 }
 
-while getopts ":s:l:S:L:i:e:a:b:w:ouUfh" arg; do
+while getopts ":s:l:S:L:i:e:a:b:w:ouUfg:h" arg; do
 	case "$arg" in
 		s)
 			server=$OPTARG
@@ -215,6 +228,10 @@ while getopts ":s:l:S:L:i:e:a:b:w:ouUfh" arg; do
 			flush_r
 			exit 0
 			;;
+		g)
+			GFW_LIST=$OPTARG
+			;;
+
 		h)
 			usage 0
 			;;
