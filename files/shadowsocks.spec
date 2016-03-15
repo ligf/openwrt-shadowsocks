@@ -55,6 +55,7 @@ start_rules() {
 			w|W|b|B) local ac_ips="$lan_ac_mode$lan_ac_ips";;
 		esac
 	fi
+	local gfw_list=$(uci_get_by_type access_control gfwlist_enable)
 	/usr/bin/ss-rules \
 		-s "$server" \
 		-l "$local_port" \
@@ -65,6 +66,7 @@ start_rules() {
 		-b "$(uci_get_by_type access_control wan_bp_ips)" \
 		-w "$(uci_get_by_type access_control wan_fw_ips)" \
 		-e "$(uci_get_by_type access_control ipt_ext)" \
+		-g "$gfw_list" \
 		-o $ARG_UDP
 	return $?
 }
