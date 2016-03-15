@@ -139,7 +139,7 @@ tp_rule() {
 }
 
 get_wan_ip() {
-	cat <<-EOF | grep -E "^([0-9,3}\.){3}[0-9]{1,3}"
+	cat <<-EOF | grep -E "^([0-9]{1,3}\.){3}[0-9]{1,3}"
 		$server
 		$SERVER
 		$WAN_BP_IP
