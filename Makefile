@@ -101,6 +101,8 @@ define Package/shadowsocks-libev-spec/install
 	$(INSTALL_DATA) ./files/shadowsocks.config $(1)/etc/config/shadowsocks
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/shadowsocks.spec $(1)/etc/init.d/shadowsocks
+	$(INSTALL_DIR) $(1)/etc/dnsmasq.d
+	$(INSTALL_DATA) ./files/gfwlist.conf $(1)/etc/dnsmasq.d/gfwlist.conf
 endef
 
 Package/shadowsocks-libev-polarssl/install = $(Package/shadowsocks-libev/install)
