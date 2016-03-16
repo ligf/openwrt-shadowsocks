@@ -55,8 +55,8 @@ start_rules() {
 			w|W|b|B) local ac_ips="$lan_ac_mode$lan_ac_ips";;
 		esac
 	fi
-	local gfw_list=$(uci_get_by_type access_control gfwlist_enable)
-	if [ "$gfw_list" = 1 ]; then
+	local chnroute=$(uci_get_by_type access_control chnroute_enable)
+	if [ "$chnroute" = 0 ]; then
 	GFW="-g"
 	else
 	GFW=""
