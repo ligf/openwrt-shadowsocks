@@ -56,6 +56,11 @@ start_rules() {
 		esac
 	fi
 	local gfw_list=$(uci_get_by_type access_control gfwlist_enable)
+	if[ "$gfw_list" = 1 ]; then
+	GFW="-g"
+	else
+	GFW=""
+	if
 	/usr/bin/ss-rules \
 		-s "$server" \
 		-l "$local_port" \
@@ -66,8 +71,7 @@ start_rules() {
 		-b "$(uci_get_by_type access_control wan_bp_ips)" \
 		-w "$(uci_get_by_type access_control wan_fw_ips)" \
 		-e "$(uci_get_by_type access_control ipt_ext)" \
-		-g "$gfw_list" \
-		-o $ARG_UDP
+		-o $ARG_UDP $GFW
 	return $?
 }
 
