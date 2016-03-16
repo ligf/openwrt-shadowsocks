@@ -56,7 +56,7 @@ start_rules() {
 		esac
 	fi
 	local chnroute=$(uci_get_by_type access_control chnroute_enable)
-	if [ ! -n "$chnroute" ]; then
+	if [ "$chnroute" = 0 ]; then
 	GFW="-g"
 	else
 	GFW=""
