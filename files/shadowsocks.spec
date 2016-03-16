@@ -56,11 +56,11 @@ start_rules() {
 		esac
 	fi
 	local gfw_list=$(uci_get_by_type access_control gfwlist_enable)
-	if[ "$gfw_list" = 1 ]; then
+	if [ "$gfw_list" = 1 ]; then
 	GFW="-g"
 	else
 	GFW=""
-	if
+	fi
 	/usr/bin/ss-rules \
 		-s "$server" \
 		-l "$local_port" \
