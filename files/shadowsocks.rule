@@ -66,23 +66,22 @@ flush_r() {
 
 ipset_r() {
 	$IPT -N SS_SPEC_WAN_AC
-	if [ "$GFW_LIST" = 0 ]; then
+	if [ "$GFW_LIST" = 1 ]; then
+	echo "conf-dir=/etc/dnsmasq.d" >> /etc/dnsmasq.conf
+	ipset -N ss_spec_wan_gfw hash:ip
+	/etc/init.d/dnsmasq restart
+	$IPT -A SS_SPEC_WAN_AC -m set --match-set ss_spec_wan_gfw dst -j SS_SPEC_WAN_FW
+
+	else
 	ipset -! -R <<-EOF || return 1
 		create ss_spec_wan_ac hash:net
 		$(gen_iplist | sed -e "s/^/add ss_spec_wan_ac /")
 		$(for ip in $WAN_FW_IP; do echo "add ss_spec_wan_ac $ip nomatch"; done)
 	EOF
-
 	$IPT -A SS_SPEC_WAN_AC -m set --match-set ss_spec_wan_ac dst -j RETURN && \
 	$IPT -A SS_SPEC_WAN_AC -j SS_SPEC_WAN_FW
-
-	else
-	echo "conf-dir=/etc/dnsmasq.d" >> /etc/dnsmasq.conf
-	ipset -N ss_spec_wan_gfw hash:ip
-	/etc/init.d/dnsmasq restart
-	$IPT -A SS_SPEC_WAN_AC -m set --match-set ss_spec_wan_gfw dst -j SS_SPEC_WAN_FW
-	fi
 	
+	fi
 	return $?
 }
 
@@ -186,7 +185,7 @@ EOF
 	return 0
 }
 
-while getopts ":s:l:S:L:i:e:a:b:w:ouUfg:h" arg; do
+while getopts ":s:l:S:L:i:e:a:b:w:ouUfgh" arg; do
 	case "$arg" in
 		s)
 			server=$OPTARG
@@ -229,9 +228,8 @@ while getopts ":s:l:S:L:i:e:a:b:w:ouUfg:h" arg; do
 			exit 0
 			;;
 		g)
-			GFW_LIST=$OPTARG
+			GFW_LIST=1
 			;;
-
 		h)
 			usage 0
 			;;
