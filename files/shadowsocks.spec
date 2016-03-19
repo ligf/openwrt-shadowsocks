@@ -55,8 +55,8 @@ start_rules() {
 			w|W|b|B) local ac_ips="$lan_ac_mode$lan_ac_ips";;
 		esac
 	fi
-	local chnroute=$(uci_get_by_type access_control chnroute_enable)
-	if [ "$chnroute" = 0 ]; then
+	local mode=$(uci_get_by_type access_control wan_work_mode)
+	if [ "$mode" = "gfw" ]; then
 	GFW="-g"
 	else
 	GFW=""
@@ -69,6 +69,7 @@ start_rules() {
 		-a "$ac_ips" \
 		-i "$(uci_get_by_type access_control wan_bp_list)" \
 		-b "$(uci_get_by_type access_control wan_bp_ips)" \
+		-B "$(uci_get_by_type access_control wan_db_dos)" \
 		-w "$(uci_get_by_type access_control wan_fw_ips)" \
 		-e "$(uci_get_by_type access_control ipt_ext)" \
 		-o $ARG_UDP $GFW
