@@ -24,6 +24,7 @@ usage() {
 		    -i <ip_list_file>       a file content is bypassed ip list
 		    -a <lan_ips>            lan ip of access control, need a prefix to
 		                            define access control mode
+		    -B <wan_dos>            domain blacklist
 		    -b <wan_ips>            wan ip of will be bypassed
 		    -w <wan_ips>            wan ip of will be forwarded
 		    -e <extra_options>      extra options for iptables
@@ -55,6 +56,8 @@ flush_r() {
 	flush_iptables nat
 	flush_iptables mangle
 	sed -i '/^conf-dir=/d' /etc/dnsmasq.conf
+	sed -i '/^server=/d' /etc/dnsmasq.conf
+	sed -i '/^ipset=/d' /etc/dnsmasq.conf
 	ip rule del fwmark 0x01/0x01 table 100 2>/dev/null
 	ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null
 	ipset -X ss_spec_lan_ac 2>/dev/null
@@ -67,9 +70,17 @@ flush_r() {
 ipset_r() {
 	$IPT -N SS_SPEC_WAN_AC
 	if [ "$GFW_LIST" = 1 ]; then
+
+	for d in $WAN_DB_DO
+	do
+	echo "server=/.$d/127.0.0.1#5353" >> /etc/dnsmasq.conf
+	echo "ipset=/.$d/ss_spec_wan_gfw" >> /etc/dnsmasq.conf
+	done
 	echo "conf-dir=/etc/dnsmasq.d" >> /etc/dnsmasq.conf
+
 	ipset -N ss_spec_wan_gfw hash:ip
 	/etc/init.d/dnsmasq restart
+
 	$IPT -A SS_SPEC_WAN_AC -m set --match-set ss_spec_wan_gfw dst -j SS_SPEC_WAN_FW
 
 	else
@@ -185,7 +196,7 @@ EOF
 	return 0
 }
 
-while getopts ":s:l:S:L:i:e:a:b:w:ouUfgh" arg; do
+while getopts ":s:l:S:L:i:e:a:b:B:w:ouUfgh" arg; do
 	case "$arg" in
 		s)
 			server=$OPTARG
@@ -210,6 +221,9 @@ while getopts ":s:l:S:L:i:e:a:b:w:ouUfgh" arg; do
 			;;
 		b)
 			WAN_BP_IP=$(for ip in $OPTARG; do echo $ip; done)
+			;;
+		B)
+			WAN_DB_DO=$OPTARG
 			;;
 		w)
 			WAN_FW_IP=$OPTARG
