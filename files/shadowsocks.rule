@@ -141,8 +141,15 @@ tp_rule() {
 	ip route add local 0.0.0.0/0 dev lo table 100
 	local ipt="iptables -t mangle"
 	$ipt -N SS_SPEC_TPROXY
+	
+	if [ "$GFW_LIST" = 1 ]; then
+	$ipt -A SS_SPEC_TPROXY -p udp -m set --match-set ss_spec_wan_gfw dst \
+		-j TPROXY --on-port "$LOCAL_PORT" --tproxy-mark 0x01/0x01
+	else
 	$ipt -A SS_SPEC_TPROXY -p udp -m set ! --match-set ss_spec_wan_ac dst \
 		-j TPROXY --on-port "$LOCAL_PORT" --tproxy-mark 0x01/0x01
+	fi
+	
 	$ipt -I PREROUTING 1 ${IFNAME:+-i $IFNAME} -p udp $EXT_ARGS $MATCH_SET \
 		-m comment --comment "$TAG" -j SS_SPEC_TPROXY
 	return $?
@@ -153,6 +160,7 @@ get_wan_ip() {
 		$server
 		$SERVER
 		$WAN_BP_IP
+		$(/sbin/ifconfig|sed -n '/inet addr/s/^[^:]*:\([0-9.]\{7,15\}\) .*/\1/p')
 EOF
 }
 
