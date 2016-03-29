@@ -99,6 +99,8 @@ start_redir() {
 }
 
 start_tunnel() {
+	UDP_FORWARD_SERVER=$(uci_get_by_type udp_forward udp_forward_server)
+	gen_config_file $UDP_FORWARD_SERVER
 	/usr/bin/ss-tunnel \
 		-c $CONFIG_FILE $ARG_OTA ${ARG_UDP:="-u"} \
 		-l $(uci_get_by_type udp_forward tunnel_port 5300) \
