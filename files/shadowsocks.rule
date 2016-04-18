@@ -45,7 +45,7 @@ loger() {
 }
 
 flush_r() {
-	iptables-save | grep -v "$TAG" | iptables-restore
+	iptables-save -c | grep -v "$TAG" | iptables-restore -c
 	sed -i '/^conf-dir=/d' /etc/dnsmasq.conf
 	sed -i '/^server=/d' /etc/dnsmasq.conf
 	sed -i '/^ipset=/d' /etc/dnsmasq.conf
