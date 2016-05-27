@@ -103,7 +103,7 @@ start_tunnel() {
 	gen_config_file $UDP_FORWARD_SERVER
 	/usr/bin/ss-tunnel \
 		-c $CONFIG_FILE $ARG_OTA ${ARG_UDP:="-u"} \
-		-l $(uci_get_by_type udp_forward tunnel_port 5300) \
+		-l $(uci_get_by_type udp_forward tunnel_port 5353) \
 		-L $(uci_get_by_type udp_forward tunnel_forward 8.8.4.4:53) \
 		-f /var/run/ss-tunnel.pid
 	return $?
